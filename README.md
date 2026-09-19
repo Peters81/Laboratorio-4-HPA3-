@@ -31,7 +31,7 @@ Primero se diseñó el formulario de la aplicación utilizando Windows Forms. Se
 
 También se utilizó un `ImageList` para colocar imágenes en algunos de los botones de la aplicación, como guardar, modificar y limpiar.
 
-![Diseño de la aplicación](./imagene/lab4iamagen1.png)
+![Diseño de la aplicación](./image/lab4iamagen1.png)
 
 ## Base de datos MySQL
 
@@ -41,7 +41,7 @@ Los campos utilizados son `id`, `nombre`, `precio`, `cantidad` e `imagen`. El ca
 
 En C#, este tipo de información se maneja mediante un arreglo de bytes (`byte[]`), lo que permite convertir la imagen para guardarla en la base de datos.
 
-![Base de datos MySQL](./imagene/lab4iamagen2.png)
+![Base de datos MySQL](./image/lab4iamagen2.png)
 
 ## Conexión entre C# y MySQL
 
