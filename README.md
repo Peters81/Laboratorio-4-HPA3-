@@ -97,14 +97,4 @@ También se configuró el filtro del `OpenFileDialog` para trabajar con formatos
 
 🩷 MemoryStream
 
-## Estructura del repositorio
 
-```text
-Laboratorio-4-HPA3/
-│
-├── ...
-├── imagenes/
-│   ├── lab4iamagen1.png
-│   └── lab4iamagen2.png
-├── .gitignore
-└── README.md
