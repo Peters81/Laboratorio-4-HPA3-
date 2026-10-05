@@ -119,7 +119,7 @@ Imagenes de Evidencia
 
 Resultado
 
-![Base de datos MySQL](./photos/eliminarR.png)
+![Base de datos MySQL](./photos/eliminarRe.png)
 
 ### 🩷Botón Limpiar
 
