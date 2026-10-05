@@ -76,11 +76,11 @@ Después de seleccionar el archivo, la imagen se carga en el `PictureBox`, donde
 
 También se configuró el filtro del `OpenFileDialog` para trabajar con formatos de imagen como `.jpg`, `.png` y `.bmp`.
 
-## Última modificación del proyecto
+# Última modificación del proyecto (21 septiemnbre 2026)
 
 En la última modificación del proyecto se agregaron nuevas funcionalidades para completar el manejo de los productos registrados. Además de guardar productos, ahora la aplicación permite seleccionar un registro desde el `DataGridView`, modificar su información, eliminarlo y limpiar los campos del formulario.
 
-### Selección de productos
+### 🩷Selección de productos
 
 Al hacer clic sobre un producto dentro del `DataGridView`, la información del registro seleccionado se carga automáticamente en los campos del formulario.
 
@@ -88,7 +88,7 @@ Se muestran nuevamente el nombre, precio, cantidad e imagen del producto. Tambi�
 
 Para realizar esta función se utilizó el evento `CellClick` del `DataGridView`.
 
-### Botón Modificar
+### 🩷Botón Modificar
 
 Se agregó la funcionalidad del botón **MODIFICAR**, que permite actualizar la información de un producto que ya se encuentra registrado en la base de datos.
 
@@ -96,7 +96,7 @@ Primero se debe seleccionar un producto desde el `DataGridView`. Luego se pueden
 
 Después de realizar la modificación, el `DataGridView` se actualiza automáticamente para mostrar los nuevos datos.
 
-### Botón Eliminar
+### 🩷Botón Eliminar
 
 El botón **ELIMINAR** permite borrar un producto seleccionado de la base de datos.
 
@@ -104,7 +104,7 @@ Antes de realizar la eliminación, el programa muestra un mensaje de confirmaci�
 
 Si se confirma la operación, se utiliza el método `DeleteSeguro` para eliminar el registro de MySQL. Finalmente, se vuelve a cargar la lista de productos para actualizar el `DataGridView`.
 
-### Botón Limpiar
+### 🩷Botón Limpiar
 
 También se agregó la funcionalidad del botón **LIMPIAR**, encargado de dejar nuevamente vacío el formulario.
 
