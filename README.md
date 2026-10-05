@@ -283,10 +283,6 @@ MySQL
 `Form1` utiliza la interfaz `IProductoRepository`, mientras que la clase `Conexion` se encarga de implementar los métodos necesarios para trabajar con la base de datos.
 
 De esta manera, el formulario no depende directamente de la implementación de `Conexion`, sino del contrato establecido por la interfaz.
-```
-
-Eso lo puedes **pegar debajo de tu última actualización** tal cual.
-
 
 
 ## Futuras actualizaciones
