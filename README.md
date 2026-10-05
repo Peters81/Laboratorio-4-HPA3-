@@ -52,6 +52,21 @@ Para conectar la aplicación con MySQL se creó una clase encargada de establece
 
 A partir de esta conexión se pueden realizar consultas y obtener los registros almacenados en la tabla `productos`. También se utilizan `MySqlCommand` para ejecutar instrucciones SQL y `MySqlDataReader` para leer los datos obtenidos.
 
+### 🩷Boton Guardar
+Se implementó la funcionalidad del botón GUARDAR, encargado de procesar y registrar la información ingresada en el formulario dentro de la base de datos.
+
+Al hacer clic en este botón, el sistema realiza las validaciones de los campos (comprobando que no haya datos vacíos y que los valores numéricos de precio y cantidad sean válidos). Una vez superadas las validaciones, captura la información de los cuadros de texto junto con la imagen convertida a arreglo de bytes (byte[]) y ejecuta la inserción del nuevo registro en la tabla de productos.
+
+Al finalizar el guardado exitoso, se actualiza automáticamente el DataGridView para reflejar el nuevo producto ingresado y se notifica al usuario mediante un mensaje de confirmación.
+
+Imagenes de Evidencia
+
+![Base de datos MySQL](./photos/10.png)
+
+Resultado
+
+![Base de datos MySQL](./photos/11.png)
+
 ## Manejo de productos
 
 Los productos se manejan mediante una lista de objetos `Producto`. Los registros obtenidos desde la base de datos se cargan en esta lista y posteriormente se muestran en el `DataGridView`.
@@ -119,7 +134,7 @@ Imagenes de Evidencia
 
 Resultado
 
-![Base de datos MySQL](./photos/eliminarR.png)
+![Base de datos MySQL](./photos/eliminarRe.png)
 
 ### 🩷Botón Limpiar
 
