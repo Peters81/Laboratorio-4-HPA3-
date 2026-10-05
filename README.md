@@ -97,10 +97,14 @@ Primero se debe seleccionar un producto desde el `DataGridView`. Luego se pueden
 Después de realizar la modificación, el `DataGridView` se actualiza automáticamente para mostrar los nuevos datos.
 
 Imagenes de Evidencia
+
 ![Base de datos MySQL](./photos/12.png)
 
 Resultado
+
 ![Base de datos MySQL](./photos/13.png)
+
+
 ### 🩷Botón Eliminar
 
 El botón **ELIMINAR** permite borrar un producto seleccionado de la base de datos.
