@@ -96,6 +96,15 @@ Primero se debe seleccionar un producto desde el `DataGridView`. Luego se pueden
 
 Después de realizar la modificación, el `DataGridView` se actualiza automáticamente para mostrar los nuevos datos.
 
+Imagenes de Evidencia
+
+![Base de datos MySQL](./photos/12.png)
+
+Resultado
+
+![Base de datos MySQL](./photos/13.png)
+
+
 ### 🩷Botón Eliminar
 
 El botón **ELIMINAR** permite borrar un producto seleccionado de la base de datos.
@@ -103,6 +112,14 @@ El botón **ELIMINAR** permite borrar un producto seleccionado de la base de dat
 Antes de realizar la eliminación, el programa muestra un mensaje de confirmación utilizando `MessageBox`. Esto permite que el usuario pueda confirmar o cancelar la operación y evita eliminar un producto accidentalmente.
 
 Si se confirma la operación, se utiliza el método `DeleteSeguro` para eliminar el registro de MySQL. Finalmente, se vuelve a cargar la lista de productos para actualizar el `DataGridView`.
+
+Imagenes de Evidencia
+
+![Base de datos MySQL](./photos/eliminar.png)
+
+Resultado
+
+![Base de datos MySQL](./photos/eliminarR.png)
 
 ### 🩷Botón Limpiar
 
