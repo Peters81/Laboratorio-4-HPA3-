@@ -152,6 +152,143 @@ Para convertir las imágenes a `byte[]` se utiliza `MemoryStream`. También se a
 
 Las imágenes mostradas dentro del `DataGridView` se configuran con el modo `Zoom`, permitiendo visualizar la imagen completa dentro de su celda.
 
+
+
+# Última modificación del proyecto - Implementación de Interfaz- 5/10/2026
+
+En esta actualización se agregó una interfaz llamada `IProductoRepository`, utilizada como contrato para definir las operaciones principales que se realizan con los productos.
+
+## 🩷Creación de la Interfaz
+
+Para agregar la interfaz en Visual Studio se realizaron los siguientes pasos:
+
+1. Clic derecho sobre el proyecto `ProyectoProductos`.
+2. Seleccionar `Agregar`.
+3. Seleccionar `Nuevo elemento`.
+4. Seleccionar `Interfaz`.
+5. Colocar como nombre `IProductoRepository.cs`.
+
+La interfaz creada contiene los métodos que deberá implementar la clase encargada de trabajar con la base de datos.
+
+```csharp
+using System.Collections.Generic;
+
+namespace ProyectoProductos
+{
+    public interface IProductoRepository
+    {
+        List<Producto> GetProductos(string filtro);
+        bool InsertSeguro(string tbName, Dictionary<string, object> data);
+        bool UpdateSeguro(string tbName, Dictionary<string, object> data, int id);
+        bool DeleteSeguro(string tbName, int id);
+    }
+}
+```
+
+![Base de datos MySQL](./photos/INTERFAZ.png)
+
+
+## 🩷Cambios en `Conexion.cs`
+
+La clase `Conexion` fue modificada para implementar la interfaz `IProductoRepository`.
+
+Antes:
+
+```csharp
+public class Conexion
+```
+
+Ahora:
+
+```csharp
+public class Conexion : IProductoRepository
+```
+
+También se eliminó `static` de los métodos:
+
+```csharp
+GetProductos()
+InsertSeguro()
+UpdateSeguro()
+DeleteSeguro()
+```
+
+Esto permite trabajar con una instancia de la clase `Conexion` mediante la interfaz.
+
+## 🩷Cambios en `Form1.cs`
+
+Dentro de `Form1.cs` se agregó una variable de tipo `IProductoRepository`:
+
+```csharp
+private IProductoRepository conexionRepo;
+```
+
+Luego se crea la conexión dentro del constructor:
+
+```csharp
+public Form1()
+{
+    InitializeComponent();
+    conexionRepo = new Conexion();
+}
+```
+
+Las llamadas anteriores se realizaban directamente desde la clase `Conexion`.
+
+Por ejemplo:
+
+```csharp
+Conexion.InsertSeguro(...);
+Conexion.UpdateSeguro(...);
+Conexion.DeleteSeguro(...);
+Conexion.GetProductos(...);
+```
+
+Ahora se realizan utilizando `conexionRepo`:
+
+```csharp
+conexionRepo.InsertSeguro(...);
+conexionRepo.UpdateSeguro(...);
+conexionRepo.DeleteSeguro(...);
+conexionRepo.GetProductos(...);
+```
+
+## 🩷Diferencia entre el código anterior y el nuevo
+
+| Aspecto | Antes | Ahora |
+|---|---|---|
+| Conexión | `Form1` dependía directamente de `Conexion` | `Form1` trabaja mediante `IProductoRepository` |
+| Métodos | Se utilizaban métodos `static` | Se utilizan métodos de instancia |
+| Insertar | `Conexion.InsertSeguro()` | `conexionRepo.InsertSeguro()` |
+| Modificar | `Conexion.UpdateSeguro()` | `conexionRepo.UpdateSeguro()` |
+| Eliminar | `Conexion.DeleteSeguro()` | `conexionRepo.DeleteSeguro()` |
+| Consultar | `Conexion.GetProductos()` | `conexionRepo.GetProductos()` |
+| Acoplamiento | Mayor acoplamiento con `Conexion` | Menor acoplamiento mediante la interfaz |
+| Mantenimiento | Más difícil realizar cambios | Más fácil reemplazar o modificar la conexión |
+
+## 🩷Funcionamiento de la Interfaz
+
+La estructura utilizada ahora es:
+
+```text
+Form1
+  ↓
+IProductoRepository
+  ↓
+Conexion
+  ↓
+MySQL
+```
+
+`Form1` utiliza la interfaz `IProductoRepository`, mientras que la clase `Conexion` se encarga de implementar los métodos necesarios para trabajar con la base de datos.
+
+De esta manera, el formulario no depende directamente de la implementación de `Conexion`, sino del contrato establecido por la interfaz.
+```
+
+Eso lo puedes **pegar debajo de tu última actualización** tal cual.
+
+
+
 ## Futuras actualizaciones
 
 Como futura mejora del proyecto se plantea agregar un formato predeterminado para la información antes de almacenarla en la base de datos.
