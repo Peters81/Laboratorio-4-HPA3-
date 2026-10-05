@@ -113,6 +113,14 @@ Antes de realizar la eliminación, el programa muestra un mensaje de confirmaci�
 
 Si se confirma la operación, se utiliza el método `DeleteSeguro` para eliminar el registro de MySQL. Finalmente, se vuelve a cargar la lista de productos para actualizar el `DataGridView`.
 
+Imagenes de Evidencia
+
+![Base de datos MySQL](./photos/eliminar.png)
+
+Resultado
+
+![Base de datos MySQL](./photos/eliminarR.png)
+
 ### 🩷Botón Limpiar
 
 También se agregó la funcionalidad del botón **LIMPIAR**, encargado de dejar nuevamente vacío el formulario.
