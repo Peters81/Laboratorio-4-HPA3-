@@ -1,0 +1,1064 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ProyectoProductos
+{
+    public class Producto
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; }
+
+        public decimal Precio { get; set; }
+        public int Cantidad { get; set; }
+        public byte[] Imagen { get; set; }
+
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
+using MySql.Data.MySqlClient;
+
+namespace ProyectoProductos
+{
+    public class Conexion : IProductoRepository
+    {
+        private static string cadenaConexion = "Server=localhost; Database=cristell; Uid=root; Pwd=peters;";
+
+        public static MySqlConnection ObtenerConexion()
+        {
+            try
+            {
+                MySqlConnection conexion = new MySqlConnection(cadenaConexion);
+                conexion.Open();
+                return conexion;
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show("Error al conectar: " + ex.Message);
+                return null;
+            }
+        }
+
+        // Métodos que cumplen con el contrato (no estáticos)
+        public List<Producto> GetProductos(string filtro)
+        {
+            List<Producto> listaProductos = new List<Producto>();
+            string Sqlquery = "SELECT id, nombre, precio, cantidad, imagen FROM productos";
+
+            if (!string.IsNullOrEmpty(filtro))
+            {
+                Sqlquery += " WHERE id LIKE @filtro OR nombre LIKE @filtro OR precio LIKE @filtro OR cantidad LIKE @filtro";
+            }
+
+            using (MySqlConnection conn = ObtenerConexion())
+            {
+                if (conn == null) return listaProductos;
+
+                using (MySqlCommand cmd = new MySqlCommand(Sqlquery, conn))
+                {
+                    if (!string.IsNullOrEmpty(filtro))
+                    {
+                        cmd.Parameters.AddWithValue("@filtro", "%" + filtro + "%");
+                    }
+
+                    using (MySqlDataReader mReader = cmd.ExecuteReader())
+                    {
+                        while (mReader.Read())
+                        {
+                            Producto prod = new Producto();
+                            prod.Id = Convert.ToInt32(mReader["id"]);
+                            prod.Nombre = mReader["nombre"].ToString();
+                            prod.Precio = Convert.ToDecimal(mReader["precio"]);
+                            prod.Cantidad = Convert.ToInt32(mReader["cantidad"]);
+                            prod.Imagen = mReader["imagen"] is DBNull ? null : (byte[])mReader["imagen"];
+
+                            listaProductos.Add(prod);
+                        }
+                        mReader.Close();
+                    }
+                }
+            }
+
+            return listaProductos;
+        }
+
+        public bool InsertSeguro(string tbName, Dictionary<string, object> data)
+        {
+            var columns = string.Join(", ", data.Keys);
+            var placeholders = "@" + string.Join(", @", data.Keys);
+
+            string sql = $"INSERT INTO {tbName} ({columns}) VALUES ({placeholders})";
+
+            try
+            {
+                using (MySqlConnection conexion = ObtenerConexion())
+                {
+                    if (conexion == null) return false;
+
+                    using (MySqlCommand stmt = new MySqlCommand(sql, conexion))
+                    {
+                        foreach (var kvp in data)
+                        {
+                            stmt.Parameters.AddWithValue("@" + kvp.Key, kvp.Value ?? DBNull.Value);
+                        }
+
+                        stmt.ExecuteNonQuery();
+                        return true;
+                    }
+                }
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show("Error en INSERT: " + ex.Message);
+                return false;
+            }
+        }
+
+        public bool UpdateSeguro(string tbName, Dictionary<string, object> data, int id)
+        {
+            List<string> setClauses = new List<string>();
+            foreach (var key in data.Keys)
+            {
+                setClauses.Add($"{key} = @{key}");
+            }
+
+            string sql = $"UPDATE {tbName} SET {string.Join(", ", setClauses)} WHERE id = @id";
+
+            try
+            {
+                using (MySqlConnection conexion = ObtenerConexion())
+                {
+                    if (conexion == null) return false;
+
+                    using (MySqlCommand stmt = new MySqlCommand(sql, conexion))
+                    {
+                        foreach (var kvp in data)
+                        {
+                            stmt.Parameters.AddWithValue("@" + kvp.Key, kvp.Value ?? DBNull.Value);
+                        }
+                        stmt.Parameters.AddWithValue("@id", id);
+
+                        stmt.ExecuteNonQuery();
+                        return true;
+                    }
+                }
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show("Error al actualizar: " + ex.Message);
+                return false;
+            }
+        }
+
+        public bool DeleteSeguro(string tbName, int id)
+        {
+            string sql = $"DELETE FROM {tbName} WHERE id = @id";
+
+            try
+            {
+                using (MySqlConnection conexion = ObtenerConexion())
+                {
+                    if (conexion == null) return false;
+
+                    using (MySqlCommand stmt = new MySqlCommand(sql, conexion))
+                    {
+                        stmt.Parameters.AddWithValue("@id", id);
+                        stmt.ExecuteNonQuery();
+                        return true;
+                    }
+                }
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show("Error al eliminar: " + ex.Message);
+                return false;
+            }
+        }
+    }
+}
+using System;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+
+namespace Proyecto_Productos
+{
+    public static class Imagenes
+    {
+        public static byte[] ImageToByteArray(Image image)
+        {
+            if (image == null)
+                return null;
+
+            try
+            {
+                // Creamos un Bitmap limpio a partir de la imagen para evitar 
+                // errores de formato nulo/recursos cuando la imagen viene de Properties.Resources
+                using (Bitmap bmp = new Bitmap(image))
+                {
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        bmp.Save(ms, ImageFormat.Png);
+                        return ms.ToArray();
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+    }
+}
+using MySql.Data.MySqlClient;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace ProyectoProductos
+{
+    public partial class Form1 : Form
+    {
+        private List<Producto> listaProductos;
+        private Dictionary<string, object> myProducto = new Dictionary<string, object>();
+        private string rutaImagenSeleccionada = "";
+
+        // Campo para la interfaz/contrato
+        private IProductoRepository conexionRepo;
+
+        public Form1()
+        {
+            InitializeComponent();
+            listaProductos = new List<Producto>();
+
+            // Instancia la implementación del repositorio mediante el contrato
+            conexionRepo = new Conexion();
+
+            // Vincula el evento de selección de fila por código para evitar fallos
+            dgvProductos.CellClick += dgvProductos_CellClick;
+        }
+
+        private void Form1_Load_1(object sender, EventArgs e)
+        {
+            // Ajusta la imagen en la celda para que se vea completa (Zoom)
+            if (dgvProductos.Columns.Contains("imagen") && dgvProductos.Columns["imagen"] is DataGridViewImageColumn col)
+            {
+                col.ImageLayout = DataGridViewImageCellLayout.Zoom;
+            }
+
+            cargarProductos();
+        }
+
+        private void cargarProductos(string filtro = "")
+        {
+            dgvProductos.Rows.Clear();
+            dgvProductos.Refresh();
+
+            // Llamada mediante el contrato IProductoRepository
+            listaProductos = conexionRepo.GetProductos(filtro);
+
+            foreach (var prod in listaProductos)
+            {
+                Image img = null;
+                if (prod.Imagen != null && prod.Imagen.Length > 0)
+                {
+                    using (MemoryStream ms = new MemoryStream(prod.Imagen))
+                    {
+                        using (Bitmap bmp = new Bitmap(ms))
+                        {
+                            img = new Bitmap(bmp);
+                        }
+                    }
+                }
+                dgvProductos.Rows.Add(prod.Id, prod.Nombre, prod.Precio, prod.Cantidad, img);
+            }
+        }
+
+        private void txtBusqueda_TextChanged(object sender, EventArgs e)
+        {
+            cargarProductos(txtBusqueda.Text.Trim());
+        }
+
+        // Evento del PictureBox fijo/lupa (no realiza acción de carga de archivos)
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        // EVENTO DEL PICTUREBOX DEL PRODUCTO (pictureBox2)
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Title = "Seleccionar imagen del producto";
+                openFileDialog.Filter = "Archivos de imagen|*.jpg;*.jpeg;*.png;*.bmp";
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    rutaImagenSeleccionada = openFileDialog.FileName;
+                    pictureBox2.Image = Image.FromFile(rutaImagenSeleccionada);
+                    pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
+                }
+            }
+        }
+
+        private void btnGuardar_Click(object sender, EventArgs e)
+        {
+            if (!datosCorrectos())
+            {
+                return;
+            }
+
+            CargarDatosProductos();
+
+            // Llamada mediante el contrato IProductoRepository
+            if (conexionRepo.InsertSeguro("productos", myProducto))
+            {
+                MessageBox.Show("Se ha guardado satisfactoriamente el registro");
+                cargarProductos();
+                limpiarCampos();
+            }
+        }
+
+        private void CargarDatosProductos()
+        {
+            myProducto.Clear();
+            myProducto["nombre"] = txtNombre.Text.Trim();
+            myProducto["precio"] = decimal.Parse(txtPrecio.Text.Trim());
+            myProducto["cantidad"] = int.Parse(txtCantidad.Text.Trim());
+            myProducto["imagen"] = ImageToByteArray(pictureBox2.Image);
+        }
+
+        // Conversor a prueba de fallos de codificador (Encoder Null Fix)
+        private byte[] ImageToByteArray(Image image)
+        {
+            if (image == null)
+                return null;
+
+            try
+            {
+                // Si la imagen proviene de una selección en disco, la leemos directamente
+                if (!string.IsNullOrEmpty(rutaImagenSeleccionada) && File.Exists(rutaImagenSeleccionada))
+                {
+                    return File.ReadAllBytes(rutaImagenSeleccionada);
+                }
+
+                // Si viene de Properties.Resources o la celda, redibujamos en un lienzo limpio de memoria
+                using (Bitmap bmpLimpio = new Bitmap(image.Width, image.Height))
+                {
+                    using (Graphics g = Graphics.FromImage(bmpLimpio))
+                    {
+                        g.DrawImage(image, 0, 0, image.Width, image.Height);
+                    }
+
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        bmpLimpio.Save(ms, ImageFormat.Png);
+                        return ms.ToArray();
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private bool datosCorrectos()
+        {
+            if (txtNombre.Text.Trim().Equals(""))
+            {
+                MessageBox.Show("Ingrese el Nombre del Producto");
+                return false;
+            }
+
+            if (txtPrecio.Text.Trim().Equals(""))
+            {
+                MessageBox.Show("Ingrese el Precio");
+                return false;
+            }
+
+            if (txtCantidad.Text.Trim().Equals(""))
+            {
+                MessageBox.Show("Ingrese la Cantidad");
+                return false;
+            }
+
+            if (!decimal.TryParse(txtPrecio.Text.Trim(), out decimal precio))
+            {
+                MessageBox.Show("Ingrese un Precio correcto");
+                return false;
+            }
+
+            if (!int.TryParse(txtCantidad.Text.Trim(), out int cantidad))
+            {
+                MessageBox.Show("Ingrese una cantidad correcta");
+                return false;
+            }
+
+            return true;
+        }
+
+        /* Código para los demás botones del formulario */
+
+        private int idSeleccionado = 0;
+
+        private void dgvProductos_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                DataGridViewRow fila = dgvProductos.Rows[e.RowIndex];
+
+                if (fila.Cells[0].Value != null)
+                {
+                    idSeleccionado = Convert.ToInt32(fila.Cells[0].Value);
+                    txtNombre.Text = fila.Cells[1].Value?.ToString();
+                    txtPrecio.Text = fila.Cells[2].Value?.ToString();
+                    txtCantidad.Text = fila.Cells[3].Value?.ToString();
+
+                    if (fila.Cells[4].Value is Image img)
+                    {
+                        pictureBox2.Image = img; // Muestra en pictureBox2
+                        pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
+                    }
+                    else
+                    {
+                        pictureBox2.Image = Properties.Resources.imagen;
+                    }
+                }
+            }
+        }
+
+        private void btnModificar_Click(object sender, EventArgs e)
+        {
+            if (idSeleccionado == 0)
+            {
+                MessageBox.Show("Seleccione un producto de la lista para modificar.");
+                return;
+            }
+
+            if (!datosCorrectos()) return;
+
+            CargarDatosProductos();
+
+            // Llamada mediante el contrato IProductoRepository
+            if (conexionRepo.UpdateSeguro("productos", myProducto, idSeleccionado))
+            {
+                MessageBox.Show("Registro actualizado correctamente.");
+                cargarProductos();
+                limpiarCampos();
+            }
+        }
+
+        private void btnEliminar_Click(object sender, EventArgs e)
+        {
+            if (idSeleccionado == 0)
+            {
+                MessageBox.Show("Seleccione un producto de la lista para eliminar.");
+                return;
+            }
+
+            DialogResult confirmacion = MessageBox.Show("¿Está seguro de eliminar este producto?", "Confirmar eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (confirmacion == DialogResult.Yes)
+            {
+                // Llamada mediante el contrato IProductoRepository
+                if (conexionRepo.DeleteSeguro("productos", idSeleccionado))
+                {
+                    MessageBox.Show("Producto eliminado correctamente.");
+                    cargarProductos();
+                    limpiarCampos();
+                }
+            }
+        }
+
+        private void btnLimpiar_Click(object sender, EventArgs e)
+        {
+            limpiarCampos();
+        }
+
+        private void limpiarCampos()
+        {
+            txtNombre.Clear();
+            txtPrecio.Clear();
+            txtCantidad.Clear();
+            pictureBox2.Image = Properties.Resources.imagen; // Restaura el icono por defecto
+            rutaImagenSeleccionada = "";                     // Reinicia la ruta seleccionada
+            idSeleccionado = 0;
+        }
+    }
+}
+namespace ProyectoProductos
+{
+    partial class Form1
+    {
+        /// <summary>
+        /// Variable del diseñador necesaria.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Limpiar los recursos que se estén usando.
+        /// </summary>
+        /// <param name="disposing">true si los recursos administrados se deben desechar; false en caso contrario.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Código generado por el Diseñador de Windows Forms
+
+        /// <summary>
+        /// Método necesario para admitir el Diseñador. No se puede modificar
+        /// el contenido de este método con el editor de código.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.BUSQUEDA = new System.Windows.Forms.Label();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.txtBusqueda = new System.Windows.Forms.TextBox();
+            this.dgvProductos = new System.Windows.Forms.DataGridView();
+            this.imageList1 = new System.Windows.Forms.ImageList(this.components);
+            this.lblNombre = new System.Windows.Forms.Label();
+            this.txtNombre = new System.Windows.Forms.TextBox();
+            this.txtPrecio = new System.Windows.Forms.TextBox();
+            this.lblPrecio = new System.Windows.Forms.Label();
+            this.txtCantidad = new System.Windows.Forms.TextBox();
+            this.lblCantidad = new System.Windows.Forms.Label();
+            this.lblImagen = new System.Windows.Forms.Label();
+            this.pictureBox2 = new System.Windows.Forms.PictureBox();
+            this.btnLimpiar = new System.Windows.Forms.Button();
+            this.btnEliminar = new System.Windows.Forms.Button();
+            this.btnModificar = new System.Windows.Forms.Button();
+            this.btnGuardar = new System.Windows.Forms.Button();
+            this.ID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.nombre = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.precio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cantidad = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.imagen = new System.Windows.Forms.DataGridViewImageColumn();
+            this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvProductos)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.SystemColors.GradientInactiveCaption;
+            this.panel1.Controls.Add(this.BUSQUEDA);
+            this.panel1.Controls.Add(this.pictureBox1);
+            this.panel1.Controls.Add(this.txtBusqueda);
+            this.panel1.Location = new System.Drawing.Point(77, 263);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(864, 71);
+            this.panel1.TabIndex = 0;
+            // 
+            // BUSQUEDA
+            // 
+            this.BUSQUEDA.AutoSize = true;
+            this.BUSQUEDA.Location = new System.Drawing.Point(84, 30);
+            this.BUSQUEDA.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.BUSQUEDA.Name = "BUSQUEDA";
+            this.BUSQUEDA.Size = new System.Drawing.Size(83, 16);
+            this.BUSQUEDA.TabIndex = 2;
+            this.BUSQUEDA.Text = "BUSQUEDA";
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Image = global::ProyectoProductos.Properties.Resources.lupa_de_busqueda;
+            this.pictureBox1.Location = new System.Drawing.Point(669, 21);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(4);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(33, 25);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 1;
+            this.pictureBox1.TabStop = false;
+            this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
+            // 
+            // txtBusqueda
+            // 
+            this.txtBusqueda.Location = new System.Drawing.Point(233, 21);
+            this.txtBusqueda.Margin = new System.Windows.Forms.Padding(4);
+            this.txtBusqueda.Name = "txtBusqueda";
+            this.txtBusqueda.Size = new System.Drawing.Size(427, 22);
+            this.txtBusqueda.TabIndex = 0;
+            this.txtBusqueda.TextChanged += new System.EventHandler(this.txtBusqueda_TextChanged);
+            // 
+            // dgvProductos
+            // 
+            this.dgvProductos.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvProductos.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.ID,
+            this.nombre,
+            this.precio,
+            this.cantidad,
+            this.imagen});
+            this.dgvProductos.Location = new System.Drawing.Point(77, 357);
+            this.dgvProductos.Margin = new System.Windows.Forms.Padding(4);
+            this.dgvProductos.Name = "dgvProductos";
+            this.dgvProductos.RowHeadersWidth = 51;
+            this.dgvProductos.Size = new System.Drawing.Size(864, 220);
+            this.dgvProductos.TabIndex = 1;
+            this.dgvProductos.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvProductos_CellClick);
+            // 
+            // imageList1
+            // 
+            this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
+            this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
+            this.imageList1.Images.SetKeyName(0, "limpiar.png");
+            this.imageList1.Images.SetKeyName(1, "eliminar.png");
+            this.imageList1.Images.SetKeyName(2, "editar.png");
+            this.imageList1.Images.SetKeyName(3, "agregar-usuario.png");
+            // 
+            // lblNombre
+            // 
+            this.lblNombre.AutoSize = true;
+            this.lblNombre.Location = new System.Drawing.Point(59, 46);
+            this.lblNombre.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblNombre.Name = "lblNombre";
+            this.lblNombre.Size = new System.Drawing.Size(56, 16);
+            this.lblNombre.TabIndex = 7;
+            this.lblNombre.Text = "Nombre";
+            // 
+            // txtNombre
+            // 
+            this.txtNombre.Location = new System.Drawing.Point(131, 44);
+            this.txtNombre.Margin = new System.Windows.Forms.Padding(4);
+            this.txtNombre.Name = "txtNombre";
+            this.txtNombre.Size = new System.Drawing.Size(517, 22);
+            this.txtNombre.TabIndex = 8;
+            // 
+            // txtPrecio
+            // 
+            this.txtPrecio.Location = new System.Drawing.Point(131, 76);
+            this.txtPrecio.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPrecio.Name = "txtPrecio";
+            this.txtPrecio.Size = new System.Drawing.Size(517, 22);
+            this.txtPrecio.TabIndex = 10;
+            // 
+            // lblPrecio
+            // 
+            this.lblPrecio.AutoSize = true;
+            this.lblPrecio.Location = new System.Drawing.Point(59, 78);
+            this.lblPrecio.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblPrecio.Name = "lblPrecio";
+            this.lblPrecio.Size = new System.Drawing.Size(46, 16);
+            this.lblPrecio.TabIndex = 9;
+            this.lblPrecio.Text = "Precio";
+            // 
+            // txtCantidad
+            // 
+            this.txtCantidad.Location = new System.Drawing.Point(131, 108);
+            this.txtCantidad.Margin = new System.Windows.Forms.Padding(4);
+            this.txtCantidad.Name = "txtCantidad";
+            this.txtCantidad.Size = new System.Drawing.Size(517, 22);
+            this.txtCantidad.TabIndex = 12;
+            // 
+            // lblCantidad
+            // 
+            this.lblCantidad.AutoSize = true;
+            this.lblCantidad.Location = new System.Drawing.Point(59, 110);
+            this.lblCantidad.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblCantidad.Name = "lblCantidad";
+            this.lblCantidad.Size = new System.Drawing.Size(61, 16);
+            this.lblCantidad.TabIndex = 11;
+            this.lblCantidad.Text = "Cantidad";
+            // 
+            // lblImagen
+            // 
+            this.lblImagen.AutoSize = true;
+            this.lblImagen.Location = new System.Drawing.Point(709, 32);
+            this.lblImagen.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblImagen.Name = "lblImagen";
+            this.lblImagen.Size = new System.Drawing.Size(52, 16);
+            this.lblImagen.TabIndex = 13;
+            this.lblImagen.Text = "Imagen";
+            // 
+            // pictureBox2
+            // 
+            this.pictureBox2.Image = global::ProyectoProductos.Properties.Resources.imagen;
+            this.pictureBox2.Location = new System.Drawing.Point(791, 32);
+            this.pictureBox2.Margin = new System.Windows.Forms.Padding(4);
+            this.pictureBox2.Name = "pictureBox2";
+            this.pictureBox2.Size = new System.Drawing.Size(236, 171);
+            this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox2.TabIndex = 6;
+            this.pictureBox2.TabStop = false;
+            this.pictureBox2.Click += new System.EventHandler(this.pictureBox2_Click);
+            // 
+            // btnLimpiar
+            // 
+            this.btnLimpiar.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnLimpiar.ImageIndex = 0;
+            this.btnLimpiar.ImageList = this.imageList1;
+            this.btnLimpiar.Location = new System.Drawing.Point(764, 603);
+            this.btnLimpiar.Margin = new System.Windows.Forms.Padding(4);
+            this.btnLimpiar.Name = "btnLimpiar";
+            this.btnLimpiar.Size = new System.Drawing.Size(200, 43);
+            this.btnLimpiar.TabIndex = 5;
+            this.btnLimpiar.Text = "LIMPIAR";
+            this.btnLimpiar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnLimpiar.UseVisualStyleBackColor = true;
+            this.btnLimpiar.Click += new System.EventHandler(this.btnLimpiar_Click);
+            // 
+            // btnEliminar
+            // 
+            this.btnEliminar.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnEliminar.ImageIndex = 1;
+            this.btnEliminar.ImageList = this.imageList1;
+            this.btnEliminar.Location = new System.Drawing.Point(520, 603);
+            this.btnEliminar.Margin = new System.Windows.Forms.Padding(4);
+            this.btnEliminar.Name = "btnEliminar";
+            this.btnEliminar.Size = new System.Drawing.Size(199, 43);
+            this.btnEliminar.TabIndex = 4;
+            this.btnEliminar.Text = "ELIMINAR";
+            this.btnEliminar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnEliminar.UseVisualStyleBackColor = true;
+            this.btnEliminar.Click += new System.EventHandler(this.btnEliminar_Click);
+            // 
+            // btnModificar
+            // 
+            this.btnModificar.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnModificar.ImageIndex = 2;
+            this.btnModificar.ImageList = this.imageList1;
+            this.btnModificar.Location = new System.Drawing.Point(293, 603);
+            this.btnModificar.Margin = new System.Windows.Forms.Padding(4);
+            this.btnModificar.Name = "btnModificar";
+            this.btnModificar.Size = new System.Drawing.Size(203, 43);
+            this.btnModificar.TabIndex = 3;
+            this.btnModificar.Text = "MODIFICAR";
+            this.btnModificar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnModificar.UseVisualStyleBackColor = true;
+            this.btnModificar.Click += new System.EventHandler(this.btnModificar_Click);
+            // 
+            // btnGuardar
+            // 
+            this.btnGuardar.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnGuardar.ImageIndex = 3;
+            this.btnGuardar.ImageList = this.imageList1;
+            this.btnGuardar.Location = new System.Drawing.Point(63, 603);
+            this.btnGuardar.Margin = new System.Windows.Forms.Padding(4);
+            this.btnGuardar.Name = "btnGuardar";
+            this.btnGuardar.Size = new System.Drawing.Size(199, 43);
+            this.btnGuardar.TabIndex = 2;
+            this.btnGuardar.Text = "GUARDAR";
+            this.btnGuardar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnGuardar.UseVisualStyleBackColor = true;
+            this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
+            // 
+            // ID
+            // 
+            this.ID.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.ID.HeaderText = "id";
+            this.ID.MinimumWidth = 6;
+            this.ID.Name = "ID";
+            this.ID.Width = 125;
+            // 
+            // nombre
+            // 
+            this.nombre.HeaderText = "nombre";
+            this.nombre.MinimumWidth = 6;
+            this.nombre.Name = "nombre";
+            this.nombre.Width = 125;
+            // 
+            // precio
+            // 
+            this.precio.HeaderText = "precio";
+            this.precio.MinimumWidth = 6;
+            this.precio.Name = "precio";
+            this.precio.Width = 125;
+            // 
+            // cantidad
+            // 
+            this.cantidad.HeaderText = "cantidad";
+            this.cantidad.MinimumWidth = 6;
+            this.cantidad.Name = "cantidad";
+            this.cantidad.Width = 125;
+            // 
+            // imagen
+            // 
+            this.imagen.HeaderText = "imagen";
+            this.imagen.ImageLayout = System.Windows.Forms.DataGridViewImageCellLayout.Zoom;
+            this.imagen.MinimumWidth = 6;
+            this.imagen.Name = "imagen";
+            this.imagen.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.imagen.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            this.imagen.Width = 125;
+            // 
+            // Form1
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.SystemColors.HighlightText;
+            this.ClientSize = new System.Drawing.Size(1067, 686);
+            this.Controls.Add(this.lblImagen);
+            this.Controls.Add(this.txtCantidad);
+            this.Controls.Add(this.lblCantidad);
+            this.Controls.Add(this.txtPrecio);
+            this.Controls.Add(this.lblPrecio);
+            this.Controls.Add(this.txtNombre);
+            this.Controls.Add(this.lblNombre);
+            this.Controls.Add(this.pictureBox2);
+            this.Controls.Add(this.btnLimpiar);
+            this.Controls.Add(this.btnEliminar);
+            this.Controls.Add(this.btnModificar);
+            this.Controls.Add(this.btnGuardar);
+            this.Controls.Add(this.dgvProductos);
+            this.Controls.Add(this.panel1);
+            this.Margin = new System.Windows.Forms.Padding(4);
+            this.Name = "Form1";
+            this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Form1_Load_1);
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvProductos)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+        }
+
+        #endregion
+
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.TextBox txtBusqueda;
+        private System.Windows.Forms.DataGridView dgvProductos;
+        private System.Windows.Forms.Label BUSQUEDA;
+        private System.Windows.Forms.Button btnGuardar;
+        private System.Windows.Forms.Button btnModificar;
+        private System.Windows.Forms.Button btnEliminar;
+        private System.Windows.Forms.Button btnLimpiar;
+        private System.Windows.Forms.ImageList imageList1;
+        private System.Windows.Forms.PictureBox pictureBox2;
+        private System.Windows.Forms.Label lblNombre;
+        private System.Windows.Forms.TextBox txtNombre;
+        private System.Windows.Forms.TextBox txtPrecio;
+        private System.Windows.Forms.Label lblPrecio;
+        private System.Windows.Forms.TextBox txtCantidad;
+        private System.Windows.Forms.Label lblCantidad;
+        private System.Windows.Forms.Label lblImagen;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ID;
+        private System.Windows.Forms.DataGridViewTextBoxColumn nombre;
+        private System.Windows.Forms.DataGridViewTextBoxColumn precio;
+        private System.Windows.Forms.DataGridViewTextBoxColumn cantidad;
+        private System.Windows.Forms.DataGridViewImageColumn imagen;
+    }
+}
+
+using System.Collections.Generic;
+
+namespace ProyectoProductos
+{
+
+    public interface IProductoRepository
+    {
+        List<Producto> GetProductos(string filtro);
+        bool InsertSeguro(string tbName, Dictionary<string, object> data);
+        bool UpdateSeguro(string tbName, Dictionary<string, object> data, int id);
+        bool DeleteSeguro(string tbName, int id);
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace ProyectoProductos
+{
+    internal static class Program
+    {
+        /// <summary>
+        /// Punto de entrada principal para la aplicación.
+        /// </summary>
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new Form1());
+        }
+    }
+}
+// <autogenerated />
+using System;
+using System.Reflection;
+[assembly: global::System.Runtime.Versioning.TargetFrameworkAttribute(".NETFramework,Version=v4.7.2", FrameworkDisplayName = ".NET Framework 4.7.2")]
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+// La información general de un ensamblado se controla mediante el siguiente 
+// conjunto de atributos. Cambie estos valores de atributo para modificar la información
+// asociada con un ensamblado.
+[assembly: AssemblyTitle("ProyectoProductos")]
+[assembly: AssemblyDescription("")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("ProyectoProductos")]
+[assembly: AssemblyCopyright("Copyright ©  2026")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
+
+// Si establece ComVisible en false, los tipos de este ensamblado no estarán visibles 
+// para los componentes COM.  Si es necesario obtener acceso a un tipo en este ensamblado desde 
+// COM, establezca el atributo ComVisible en true en este tipo.
+[assembly: ComVisible(false)]
+
+// El siguiente GUID sirve como id. de typelib si este proyecto se expone a COM.
+[assembly: Guid("c39e3ff6-b060-428b-b041-20e215a2de9f")]
+
+// La información de versión de un ensamblado consta de los cuatro valores siguientes:
+//
+//      Versión principal
+//      Versión secundaria
+//      Número de compilación
+//      Revisión
+//
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
+//------------------------------------------------------------------------------
+// <auto-generated>
+//     Este código fue generado por una herramienta.
+//     Versión de runtime:4.0.30319.42000
+//
+//     Los cambios en este archivo podrían causar un comportamiento incorrecto y se perderán si
+//     se vuelve a generar el código.
+// </auto-generated>
+//------------------------------------------------------------------------------
+
+namespace ProyectoProductos.Properties {
+    using System;
+    
+    
+    /// <summary>
+    ///   Clase de recurso fuertemente tipado, para buscar cadenas traducidas, etc.
+    /// </summary>
+    // StronglyTypedResourceBuilder generó automáticamente esta clase
+    // a través de una herramienta como ResGen o Visual Studio.
+    // Para agregar o quitar un miembro, edite el archivo .ResX y, a continuación, vuelva a ejecutar ResGen
+    // con la opción /str o recompile su proyecto de VS.
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+    internal class Resources {
+        
+        private static global::System.Resources.ResourceManager resourceMan;
+        
+        private static global::System.Globalization.CultureInfo resourceCulture;
+        
+        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+        internal Resources() {
+        }
+        
+        /// <summary>
+        ///   Devuelve la instancia de ResourceManager almacenada en caché utilizada por esta clase.
+        /// </summary>
+        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Resources.ResourceManager ResourceManager {
+            get {
+                if (object.ReferenceEquals(resourceMan, null)) {
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("ProyectoProductos.Properties.Resources", typeof(Resources).Assembly);
+                    resourceMan = temp;
+                }
+                return resourceMan;
+            }
+        }
+        
+        /// <summary>
+        ///   Reemplaza la propiedad CurrentUICulture del subproceso actual para todas las
+        ///   búsquedas de recursos mediante esta clase de recurso fuertemente tipado.
+        /// </summary>
+        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Globalization.CultureInfo Culture {
+            get {
+                return resourceCulture;
+            }
+            set {
+                resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap imagen {
+            get {
+                object obj = ResourceManager.GetObject("imagen", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap informacion {
+            get {
+                object obj = ResourceManager.GetObject("informacion", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap lupa_de_busqueda {
+            get {
+                object obj = ResourceManager.GetObject("lupa-de-busqueda", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+    }
+}
+//------------------------------------------------------------------------------
+// <auto-generated>
+//     This code was generated by a tool.
+//     Runtime Version:4.0.30319.42000
+//
+//     Changes to this file may cause incorrect behavior and will be lost if
+//     the code is regenerated.
+// </auto-generated>
+//------------------------------------------------------------------------------
+
+namespace ProyectoProductos.Properties
+{
+
+
+    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "11.0.0.0")]
+    internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase
+    {
+
+        private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
+
+        public static Settings Default
+        {
+            get
+            {
+                return defaultInstance;
+            }
+        }
+    }
+}
