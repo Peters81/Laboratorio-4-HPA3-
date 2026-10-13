@@ -1,3 +1,4 @@
+
 # Laboratorio 4 - HPA3
 
 ## Información del laboratorio
@@ -15,137 +16,149 @@
 
 ## Objetivos
 
-🩷 Crear una aplicación en Windows Forms para administrar productos e imágenes.
+🩷 Desarrollar una aplicación en C# Windows Forms para administrar productos y sus imágenes.
 
-🩷 Convertir imágenes a arreglos de bytes mediante `MemoryStream`.
+🩷 Implementar operaciones CRUD mediante una conexión con MySQL.
 
-🩷 Conectar C# con MySQL para registrar, consultar, modificar y eliminar productos.
+🩷 Convertir imágenes a arreglos de bytes para almacenarlas y recuperarlas desde la base de datos.
 
-🩷 Organizar las operaciones de acceso a datos mediante la interfaz `IProductoRepository`.
+🩷 Aplicar interfaces, validaciones y manejo de errores para organizar el código.
 
-## Descripción
+🩷 Incorporar inicio de sesión y trazabilidad para registrar las operaciones realizadas por los usuarios.
 
-Se desarrolló una aplicación en C# Windows Forms conectada a MySQL para administrar productos con nombre, precio, cantidad e imagen.
+## Descripción del laboratorio
 
-La aplicación permite guardar productos, buscar registros, seleccionarlos desde un `DataGridView`, modificar su información, eliminarlos y limpiar el formulario.
+En este laboratorio se desarrolló una aplicación en C# Windows Forms conectada a MySQL, que permite guardar, consultar, modificar y anular productos con su nombre, precio, cantidad e imagen.
+
+La aplicación cuenta con un `DataGridView` para visualizar los registros, una barra de búsqueda, botones para administrar los productos y validaciones para evitar datos incorrectos.
+
+Posteriormente se incorporaron mejoras como una interfaz de programación, métodos estáticos para las imágenes, eliminación lógica, inicio de sesión y auditoría de las operaciones realizadas.
 
 ## Diseño de la aplicación
 
-El formulario incluye campos para los datos del producto, un `PictureBox` para visualizar su imagen y un `DataGridView` para mostrar los registros.
+Se diseñó un formulario en Windows Forms utilizando `TextBox`, `PictureBox`, `DataGridView` y botones para administrar los productos.
 
-También se utilizó un `ImageList` para agregar imágenes a los botones.
+También se utilizó `ImageList` para agregar íconos a los botones y mejorar la presentación del formulario.
 
 ![Diseño de la aplicación](./image/lab4iamagen1.png)
 
-## Base de datos y conexión
+## Base de datos MySQL
 
-### Tabla de productos
+Se utilizó una base de datos llamada `cristell`, donde se creó la tabla `productos` para almacenar la información ingresada desde la aplicación.
 
-La tabla `productos` almacena los siguientes campos:
+Inicialmente, esta tabla contenía los campos `id`, `nombre`, `precio`, `cantidad` e `imagen`.
 
-| Campo | Descripción |
-|---|---|
-| `id` | Identificador del producto |
-| `nombre` | Nombre del producto |
-| `precio` | Precio del producto |
-| `cantidad` | Cantidad disponible |
-| `imagen` | Imagen almacenada como `LONGBLOB` |
-
-Las imágenes se manejan en C# mediante arreglos de bytes (`byte[]`).
+El campo `imagen` utiliza el tipo `LONGBLOB`, que permite almacenar archivos de imagen convertidos a datos binarios (`byte[]`).
 
 ![Base de datos MySQL](./image/lab4iamagen2.png)
 
-### Conexión con MySQL
+## Conexión entre C# y MySQL
 
-La clase `Conexion` utiliza el paquete `MySql.Data`, instalado mediante NuGet.
+La conexión se realiza mediante la clase `Conexion.cs`, utilizando `MySqlConnection` y el paquete `MySql.Data` instalado desde NuGet.
 
-| Componente | Función |
-|---|---|
-| `MySqlConnection` | Establecer la conexión con MySQL |
-| `MySqlCommand` | Ejecutar instrucciones SQL |
-| `MySqlDataReader` | Leer los resultados de las consultas |
+También se utilizan `MySqlCommand` para ejecutar las consultas SQL y `MySqlDataReader` para recuperar los productos almacenados.
 
-Los registros se almacenan en una `List<Producto>` y se muestran en el `DataGridView`.
+## Funcionalidades principales
 
-## Funcionalidades
+### 🩷 Guardar productos
 
-### 🩷 Guardar
+El botón **GUARDAR** permite registrar productos en MySQL mediante el método `InsertSeguro()`.
 
-Valida que los campos estén completos y que el precio y la cantidad sean valores numéricos válidos. Luego registra los datos y la imagen del producto en MySQL.
+Antes de guardar, se valida que los campos estén completos y que el precio y la cantidad contengan valores correctos. La imagen también se convierte a `byte[]` para almacenarse en la base de datos.
 
-Al finalizar, actualiza el `DataGridView` y muestra un mensaje de confirmación.
+Después del registro, el `DataGridView` se actualiza y muestra el nuevo producto.
 
-**Evidencia:**
+**Evidencia del registro:**
 
-![Registro de un producto](./photos/10.png)
+![Guardar producto](./photos/10.png)
 
 **Resultado:**
 
-![Producto guardado](./photos/11.png)
+![Resultado del registro](./photos/11.png)
 
-### 🩷 Buscar y seleccionar
+### 🩷 Consultar y buscar productos
 
-El campo de búsqueda permite filtrar los productos registrados.
+Los productos se obtienen desde MySQL mediante el método `GetProductos()` y se organizan utilizando `List<Producto>`.
 
-Al seleccionar un producto mediante el evento `CellClick` del `DataGridView`, se cargan su nombre, precio, cantidad e imagen en el formulario. También se conserva su `id` para modificarlo o eliminarlo.
+Los registros se muestran en el `DataGridView`, incluyendo sus imágenes. También se incorporó una barra de búsqueda para filtrar productos por ID, nombre, precio o cantidad.
 
-### 🩷 Modificar
+### 🩷 Manejo de imágenes
 
-Permite actualizar un producto seleccionado. Después de validar los datos, utiliza `UpdateSeguro` y actualiza el `DataGridView`.
+Para almacenar imágenes en MySQL se utiliza `MemoryStream`, que permite convertirlas a un arreglo de bytes (`byte[]`).
 
-**Evidencia:**
+Cuando la imagen se recupera desde la base de datos, se convierte nuevamente a `Bitmap` para mostrarla en el formulario.
 
-![Modificación de un producto](./photos/12.png)
+### 🩷 Selección de imágenes
+
+Se implementó `OpenFileDialog` para seleccionar imágenes desde la computadora.
+
+El archivo seleccionado se muestra en el `PictureBox` y puede guardarse junto con la información del producto.
+
+Se permiten formatos como `.jpg`, `.jpeg`, `.png` y `.bmp`.
+
+---
+
+## Actualización del 21/09/2026 - Funciones CRUD
+
+En esta actualización se completaron las funciones para seleccionar, modificar, eliminar y limpiar registros desde el formulario.
+
+### 🩷 Selección de productos
+
+Mediante el evento `CellClick` del `DataGridView`, se obtiene la información del producto seleccionado y se muestra nuevamente en los campos del formulario.
+
+También se conserva su ID para identificar el registro que se desea modificar o anular.
+
+### 🩷 Botón Modificar
+
+El botón **MODIFICAR** permite cambiar la información de un producto existente.
+
+Después de seleccionar el registro, se pueden editar el nombre, precio, cantidad o imagen. El método `UpdateSeguro()` actualiza los datos en MySQL y posteriormente se recarga el `DataGridView`.
+
+**Evidencia de modificación:**
+
+![Modificar producto](./photos/12.png)
 
 **Resultado:**
 
-![Producto modificado](./photos/13.png)
+![Resultado de modificación](./photos/13.png)
 
-### 🩷 Eliminar
+### 🩷 Botón Eliminar
 
-Solicita confirmación mediante `MessageBox` antes de ejecutar `DeleteSeguro` sobre el producto seleccionado.
+Se implementó el botón **ELIMINAR**, que solicita una confirmación mediante `MessageBox` antes de realizar la operación.
 
-Después de la operación, actualiza los registros del `DataGridView`.
+La eliminación se realiza mediante el método `DeleteSeguro()`. Posteriormente, esta funcionalidad fue actualizada para utilizar eliminación lógica, conservando el producto en la base de datos.
 
-**Evidencia:**
+**Evidencia de eliminación:**
 
-![Confirmación de eliminación](./photos/eliminar.png)
+![Eliminar producto](./photos/eliminar.png)
 
 **Resultado:**
 
-![Resultado de la eliminación](./photos/eliminarRe.png)
+![Resultado de eliminación](./photos/eliminarRe.png)
 
-### 🩷 Limpiar
+### 🩷 Botón Limpiar
 
-Vacía los campos de nombre, precio y cantidad, restaura la imagen predeterminada y reinicia la selección del producto y la ruta de la imagen.
+El botón **LIMPIAR** permite vaciar los campos del formulario, restaurar la imagen predeterminada del `PictureBox` y reiniciar el producto seleccionado.
 
-## Manejo de imágenes
+Esto facilita ingresar un nuevo producto sin conservar información del registro anterior.
 
-### Selección
+### 🩷 Mejoras en las imágenes
 
-Se utiliza `OpenFileDialog` para seleccionar imágenes en formatos `.jpg`, `.png` y `.bmp`. La imagen seleccionada se muestra en el `PictureBox` antes de guardar el producto.
+Se mejoró la recuperación de imágenes desde MySQL para mostrarlas nuevamente al seleccionar un producto.
 
-### Conversión y visualización
+También se utilizó `File.ReadAllBytes` para leer archivos seleccionados y se configuró el `DataGridView` con el modo `Zoom`, permitiendo visualizar las imágenes completas dentro de sus celdas.
 
-| Elemento | Función |
-|---|---|
-| `MemoryStream` | Convertir la imagen a bytes y recuperar sus datos |
-| `File.ReadAllBytes` | Leer los bytes de una imagen seleccionada desde un archivo |
-| `Bitmap` | Reconstruir la imagen a partir de sus datos |
-| `PictureBox` | Mostrar la imagen del producto |
-| `DataGridView` con modo `Zoom` | Mostrar la imagen completa dentro de la celda |
+---
 
-## Interfaz de acceso a datos (Actualizacion realizada el 05/10/2026)
+## Actualización del 05/10/2026 - Implementación de interfaz
 
-### 🩷 `IProductoRepository.cs`
+Se incorporó la interfaz `IProductoRepository` para definir las operaciones necesarias para administrar los productos.
 
-La interfaz define las operaciones que debe implementar la clase encargada de acceder a los productos.
+### 🩷 Creación de IProductoRepository
 
-Para crearla en Visual Studio:
+Se creó el archivo `IProductoRepository.cs` desde Visual Studio, utilizando la opción **Agregar → Nuevo elemento → Interfaz**.
 
-1. Clic derecho sobre `ProyectoProductos`.
-2. Seleccionar **Agregar → Nuevo elemento → Interfaz**.
-3. Asignar el nombre `IProductoRepository.cs`.
+La interfaz establece los métodos que debe implementar la clase encargada de realizar las operaciones con MySQL.
 
 ```csharp
 using System.Collections.Generic;
@@ -162,179 +175,250 @@ namespace ProyectoProductos
 }
 ```
 
+**Evidencia de la interfaz:**
+
 ![Interfaz IProductoRepository](./photos/INTERFAZ.png)
 
-### 🩷 Implementación en `Conexion.cs`
+### 🩷 Implementación en Conexion.cs
 
-La clase `Conexion` implementa la interfaz:
+Se modificó la clase `Conexion` para implementar la interfaz.
+
+**Antes:**
+
+```csharp
+public class Conexion
+```
+
+**Ahora:**
 
 ```csharp
 public class Conexion : IProductoRepository
 ```
 
-Se retiró `static` de los métodos `GetProductos`, `InsertSeguro`, `UpdateSeguro` y `DeleteSeguro` para utilizarlos mediante una instancia.
+Los métodos `GetProductos()`, `InsertSeguro()`, `UpdateSeguro()` y `DeleteSeguro()` se adaptaron para trabajar mediante una instancia de la clase.
 
-### 🩷 Uso en `Form1.cs`
+### 🩷 Uso de la interfaz en Form1.cs
 
-El formulario declara una variable de tipo `IProductoRepository` y la inicializa con una instancia de `Conexion`.
+Dentro del formulario se declaró una variable de tipo `IProductoRepository`.
 
 ```csharp
 private IProductoRepository conexionRepo;
-
-public Form1()
-{
-    InitializeComponent();
-    conexionRepo = new Conexion();
-}
 ```
 
-Las operaciones se ejecutan mediante `conexionRepo`:
+Posteriormente se utiliza una instancia de `Conexion` para ejecutar las operaciones.
+
+Por ejemplo:
 
 ```csharp
-conexionRepo.GetProductos(...);
-conexionRepo.InsertSeguro(...);
-conexionRepo.UpdateSeguro(...);
-conexionRepo.DeleteSeguro(...);
+conexionRepo.InsertSeguro("productos", myProducto);
+conexionRepo.UpdateSeguro("productos", myProducto, idSeleccionado);
+conexionRepo.DeleteSeguro("productos", idSeleccionado);
 ```
 
-### Comparación del código
+### 🩷 Diferencias principales
 
-| Aspecto | Antes | Ahora |
-|---|---|---|
-| Acceso desde el formulario | Llamadas estáticas a `Conexion` | Llamadas mediante `conexionRepo` |
-| Métodos del repositorio | Estáticos | De instancia |
-| Contrato de operaciones | Sin interfaz | Definido en `IProductoRepository` |
-| Reemplazo del repositorio | Requería cambiar las llamadas a `Conexion` | Permite utilizar otra clase que implemente la interfaz |
-
-El formulario utiliza las operaciones definidas por `IProductoRepository`, y `Conexion` contiene su implementación para MySQL. El constructor todavía crea la instancia concreta mediante `new Conexion()`.
-
-## Última modificación — 10/10/2026
-
-Se agregaron dos cambios principales: la estructura de usuarios en MySQL y el inicio de sesión mediante programación en capas. También se incorporó el manejo de errores para controlar problemas durante el acceso a la aplicación.
-
-### 🩷 Base de datos de usuarios
-
-Se creó la tabla `usuarios` para almacenar las credenciales y la información de cada usuario.
-
-| Campo | Descripción |
+| Antes | Ahora |
 |---|---|
-| `id` | Identificador numérico del usuario |
-| `dsId` | Código del usuario |
-| `dsUsuario` | Nombre utilizado para iniciar sesión |
-| `dsPassword` | Contraseña almacenada como hash |
-| `dsEstado` | Estado del usuario |
-| `dsUsuarioCreacion` | Usuario que creó el registro |
-| `dtFechaCreacion` | Fecha de creación |
-| `dsUsuarioModificacion` | Usuario que modificó el registro |
-| `dtFechaModificacion` | Fecha de modificación |
+| Form1 utilizaba directamente Conexion | Form1 trabaja mediante IProductoRepository |
+| Se utilizaban métodos estáticos | Se utilizan métodos de instancia |
+| Las operaciones dependían de Conexion | Las operaciones siguen el contrato de la interfaz |
+| Mayor dependencia del código | Mejor organización y mantenimiento |
 
-El campo `dsPassword` utiliza `VARBINARY(64)` para almacenar el resultado binario de SHA-512.
+Con este cambio se separó la parte visual de las operaciones de acceso a datos, manteniendo el funcionamiento del CRUD.
 
-Al registrar un usuario, se utiliza `SHA2` para generar el hash de la contraseña y `UNHEX` para convertirlo a bytes.
-
-```sql
-INSERT INTO usuarios
-    (dsId, dsUsuario, dsPassword, dsEstado, dsUsuarioCreacion)
-VALUES
-    ('001', 'admin', UNHEX(SHA2('123456', 512)), '1', 'Sistema');
-```
-
-**Evidencia:**
-
-<!-- Agregar aquí la imagen de la estructura de la tabla usuarios. -->
-
-#### Procedimiento de validación
-
-Se agregó el procedimiento almacenado `sp_ValidarLoginHash`, que recibe el nombre de usuario y la contraseña.
-
-El procedimiento busca un registro que coincida con las credenciales y que tenga el estado activo (`dsEstado = '1'`). Para comparar la contraseña ingresada, aplica la misma transformación utilizada al guardarla.
-
-```sql
-WHERE dsUsuario = _dsUsuario
-  AND dsPassword = UNHEX(SHA2(_dsPassword, 512))
-  AND dsEstado = '1';
-```
-
-**Evidencia:**
-
-<!-- Agregar aquí la imagen del procedimiento almacenado. -->
-
-### 🩷 Inicio de sesión por capas
-
-Se incorporó un formulario de inicio de sesión con campos para el usuario y la contraseña, y un botón para ingresar.
-
-La funcionalidad se organizó en cuatro capas:
-
-| Capa | Elementos | Función |
-|---|---|---|
-| Entidades | `E_Usuario` | Representar los datos del usuario |
-| Datos | `D_Conexion` y `D_Usuario` | Conectarse a MySQL y ejecutar la validación |
-| Negocio | `N_Usuario` | Comunicar el formulario con la capa de Datos |
-| Presentación | `frmLogin` y `frmPrincipal` | Mostrar las ventanas de la aplicación |
-
-Se agregaron las referencias entre los proyectos y el paquete `MySql.Data` en la capa de Datos.
-
-#### Validación de credenciales
-
-Al presionar el botón de iniciar sesión, el formulario obtiene las credenciales y llama al método `Login` de `N_Usuario`.
-
-```csharp
-E_Usuario usuario = N_Usuario.Login(strUsuario, strPassword);
-```
-
-La capa de Negocio llama a `D_Usuario`, que ejecuta el procedimiento almacenado mediante `MySqlCommand` y envía las credenciales como parámetros.
-
-Los resultados se leen con `MySqlDataReader`. Si existe una coincidencia, se devuelve un objeto `E_Usuario` con los datos encontrados.
-
-**Evidencia:**
-
-<!-- Agregar aquí la imagen del formulario de inicio de sesión. -->
-
-#### Acceso a la aplicación
-
-Cuando las credenciales son correctas, se muestra un mensaje de bienvenida y se abre `frmPrincipal`.
-
-Si las credenciales no coinciden con un usuario activo, se muestra un mensaje de error y se mantiene el formulario de inicio de sesión.
-
-También se configuró `Program.cs` para que la aplicación comience en `frmLogin`.
-
-```csharp
-Application.Run(new frmLogin());
-```
-
-**Resultado:**
-
-<!-- Agregar aquí la imagen del acceso correcto y del formulario principal. -->
-
-### 🩷 Manejo de errores
-
-Se agregó el manejo de excepciones mediante `try-catch` en el acceso a datos para controlar errores de conexión o de ejecución del procedimiento almacenado.
-
-Además, se verifica el resultado del método `Login` antes de utilizar los datos del usuario. Esto evita acceder a un objeto `null` cuando la validación no devuelve un registro.
-
-| Situación | Comportamiento |
-|---|---|
-| Credenciales correctas y usuario activo | Permite abrir el formulario principal |
-| Usuario o contraseña incorrectos | Muestra un mensaje de acceso fallido |
-| Usuario inactivo | No permite iniciar sesión |
-| Error de conexión o consulta | Se controla mediante el manejo de excepciones |
-
-**Evidencia:**
-
-<!-- Agregar aquí las imágenes de las pruebas de acceso fallido y manejo de errores. -->
-
+---
 
 ## Herramientas utilizadas
 
 | Herramienta | Uso |
 |---|---|
-| C# y .NET | Desarrollo de la aplicación |
-| Windows Forms | Interfaz gráfica |
-| Visual Studio | Entorno de desarrollo |
-| MySQL y MySQL Workbench | Administración de la base de datos |
-| NuGet / `MySql.Data` | Instalación del conector de MySQL |
-| `DataGridView` | Visualización y selección de productos |
-| `PictureBox` | Visualización de imágenes |
-| `ImageList` | Imágenes de los botones |
-| `OpenFileDialog` | Selección de archivos de imagen |
-| `MemoryStream` | Conversión de imágenes |
+| C# | Lenguaje de programación |
+| Windows Forms | Diseño de interfaces gráficas |
+| .NET Framework 4.7.2 | Plataforma de desarrollo |
+| Visual Studio | Desarrollo del proyecto |
+| MySQL | Almacenamiento de información |
+| MySQL Workbench | Administración de la base de datos |
+| MySql.Data / NuGet | Conexión entre C# y MySQL |
+| DataGridView | Visualización de productos |
+| PictureBox | Visualización de imágenes |
+| ImageList | Íconos de los botones |
+| OpenFileDialog | Selección de imágenes |
+| MemoryStream / Bitmap | Conversión de imágenes |
+| ErrorProvider | Validación de los campos |
+
+## Mejoras pendientes
+
+Como posible mejora del proyecto se plantea normalizar los nombres de los productos antes de almacenarlos en MySQL.
+
+Esto permitiría mantener un formato uniforme de mayúsculas, minúsculas, espacios y caracteres especiales, independientemente de cómo el usuario introduzca la información.
+
+También se contempla reforzar la seguridad de las credenciales utilizadas durante el inicio de sesión.
+
+---
+
+# Última modificación del proyecto - 10/10/2026
+
+En esta modificación se incorporaron nuevas funciones para mejorar el manejo de errores, la seguridad de las operaciones y el control de los registros almacenados en MySQL.
+
+Las principales mejoras fueron la eliminación lógica, los métodos estáticos para imágenes, el uso de `ErrorProvider`, el inicio de sesión y la trazabilidad de las operaciones realizadas por los usuarios.
+
+## 1. Mejoras en el manejo de productos
+
+### 🩷 Eliminación lógica
+
+Se modificó el método `DeleteSeguro()` para evitar que los productos se eliminen permanentemente de la base de datos.
+
+Para esto se agregó el campo `anulado` en la tabla `productos`, utilizando los valores:
+
+- `0`: producto activo.
+- `1`: producto anulado.
+
+Ahora, al presionar **ELIMINAR**, se utiliza una consulta `UPDATE` para cambiar el estado del producto.
+
+```sql
+UPDATE productos
+SET anulado = 1
+WHERE id = @id AND anulado = 0;
+```
+
+Los productos anulados dejan de mostrarse en el `DataGridView`, pero permanecen almacenados en MySQL.
+
+**Evidencia de eliminación lógica:**
+
+![Eliminación lógica](./photos/eliminacionLogica.png)
+
+**Resultado en MySQL:**
+
+![Campo anulado en MySQL](./photos/anuladoSQL.png)
+
+### 🩷 Métodos estáticos para imágenes
+
+Se actualizó la clase `Imagenes.cs` para reunir los métodos de conversión de imágenes.
+
+Se implementaron dos métodos estáticos:
+
+```csharp
+public static byte[] ImageToByteArray(Image image)
+public static Bitmap ByteArrayToBitmap(byte[] bytes)
+```
+
+El primero convierte imágenes a `byte[]` para guardarlas en MySQL, mientras que el segundo transforma los bytes nuevamente a `Bitmap` para visualizarlos.
+
+Estos métodos permiten reutilizar las conversiones desde `Form1.cs` y evitar repetir código.
+
+**Evidencia de los métodos:**
+
+![Métodos estáticos de imágenes](./photos/metodosImagenes.png)
+
+### 🩷 Manejo de errores con ErrorProvider
+
+Se agregó el componente `ErrorProvider` al formulario para mostrar errores cuando los datos ingresados no son válidos.
+
+Se modificó el método `datosCorrectos()` para verificar que:
+
+- El nombre no esté vacío.
+- El precio sea numérico y no sea negativo.
+- La cantidad sea un número entero y no sea negativa.
+
+Cuando se detecta un error, se muestra un ícono junto al campo correspondiente, indicando qué debe corregirse.
+
+También se configuró el botón **LIMPIAR** para eliminar los mensajes de error.
+
+**Evidencia de las validaciones:**
+
+![Validación con ErrorProvider](./photos/errorProvider.png)
+
+## 2. Inicio de sesión y trazabilidad
+
+### 🩷 Formulario de inicio de sesión
+
+Se creó un nuevo formulario llamado `Form2`, que permite ingresar al sistema mediante un usuario y una contraseña.
+
+El formulario cuenta con los controles `txtUsuario`, `txtContra` y los botones **INGRESAR** y **SALIR**.
+
+Al ingresar los datos, se utiliza el método `ValidarUsuario()` de la clase `Conexion` para comprobar que las credenciales correspondan a un usuario activo de MySQL.
+
+Si son correctas, se abre `Form1` y se conserva el ID del usuario autenticado.
+
+**Diseño del inicio de sesión:**
+
+![Formulario de inicio de sesión](./photos/login.png)
+
+**Acceso al sistema:**
+
+![Ingreso al sistema](./photos/loginAcceso.png)
+
+### 🩷 Actualización de la base de datos
+
+Se modificó la base de datos `cristell` para almacenar la información relacionada con los usuarios y las operaciones realizadas.
+
+La tabla `productos` incorporó los siguientes campos:
+
+| Campo | Función |
+|---|---|
+| anulado | Indica si el producto está activo o anulado |
+| fecha_creacion | Fecha y hora de registro |
+| fecha_modificacion | Fecha y hora del último cambio |
+| usuario_creacion | Usuario que registró el producto |
+| usuario_modificacion | Último usuario que modificó o anuló el producto |
+
+También se crearon dos tablas nuevas:
+
+**Tabla usuarios:** almacena los usuarios autorizados para iniciar sesión, incluyendo su ID, nombre, usuario, contraseña de prueba y estado.
+
+**Tabla auditoria:** conserva el historial de operaciones realizadas sobre los productos, incluyendo el usuario, la acción, el producto afectado y la fecha.
+
+**Evidencia de la base de datos:**
+
+![Estructura de MySQL](./photos/baseDatosActualizada.png)
+
+### 🩷 Registro de operaciones
+
+Se modificaron los métodos `InsertSeguro()`, `UpdateSeguro()` y `DeleteSeguro()` para registrar el usuario que realiza cada operación.
+
+El método `RegistrarAuditoria()` se encarga de guardar el historial en la tabla `auditoria`, utilizando las siguientes acciones:
+
+| Acción | Descripción |
+|---|---|
+| INSERTAR | Registro de un nuevo producto |
+| MODIFICAR | Actualización de un producto existente |
+| ANULAR | Eliminación lógica de un producto |
+
+También se incorporaron `NOW()` para registrar las fechas y transacciones de MySQL para asegurar que cada operación se guarde junto con su auditoría.
+
+**Evidencia de la trazabilidad:**
+
+![Historial de auditoría](./photos/auditoria.png)
+
+### 🩷 Identificación del usuario en Form1
+
+Se modificó `Program.cs` para abrir primero el formulario de inicio de sesión.
+
+Después de validar las credenciales, se envía a `Form1` el ID y nombre del usuario autenticado.
+
+```csharp
+new Form1(login.UsuarioId, login.NombreUsuario)
+```
+
+En `Form1.cs`, la instancia de `Conexion` recibe el ID del usuario:
+
+```csharp
+conexionRepo = new Conexion
+{
+    UsuarioActualId = idUsuarioActual
+};
+```
+
+De esta manera, las operaciones de guardar, modificar y anular quedan relacionadas con la cuenta que inició sesión.
+
+### 🩷 Resultado de la trazabilidad
+
+Con estas modificaciones, el sistema permite identificar quién registró un producto, quién lo modificó y quién realizó su anulación.
+
+La tabla `productos` conserva los datos de creación y de la última modificación, mientras que `auditoria` almacena el historial de las operaciones.
+
+Esto permite consultar desde MySQL las acciones realizadas por los diferentes usuarios sin perder la información de los productos anulados.
+
+**Resultado en MySQL:**
+
+![Resultado de trazabilidad](./photos/resultadoTrazabilidad.png)
