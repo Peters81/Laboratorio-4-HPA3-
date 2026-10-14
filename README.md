@@ -287,6 +287,8 @@ Los productos anulados dejan de mostrarse en el `DataGridView`, pero permanecen 
 
 ![Eliminación lógica](./photos/eliminacionLogica.png)
 
+![Eliminación lógica](./photos/eliminacionLogica1.png)
+
 **Resultado en MySQL:**
 
 ![Campo anulado en MySQL](./photos/anuladoSQL.png)
@@ -306,9 +308,6 @@ El primero convierte imágenes a `byte[]` para guardarlas en MySQL, mientras que
 
 Estos métodos permiten reutilizar las conversiones desde `Form1.cs` y evitar repetir código.
 
-**Evidencia de los métodos:**
-
-![Métodos estáticos de imágenes](./photos/metodosImagenes.png)
 
 ### 🩷 Manejo de errores con ErrorProvider
 
@@ -419,6 +418,4 @@ La tabla `productos` conserva los datos de creación y de la última modificaci�
 
 Esto permite consultar desde MySQL las acciones realizadas por los diferentes usuarios sin perder la información de los productos anulados.
 
-**Resultado en MySQL:**
 
-![Resultado de trazabilidad](./photos/resultadoTrazabilidad.png)
